@@ -6,6 +6,7 @@ import time
 import pandas as pd
 import torch
 from evaluate import load as load_metric
+from peft import PeftModel
 from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -14,6 +15,16 @@ def load_model_and_tokenizer(model_name, device="cuda"):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     dtype = torch.float16 if device == "cuda" else torch.float32
     model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype)
+    model.to(device)
+    model.eval()
+    return model, tokenizer
+
+
+def load_adapter_model_and_tokenizer(model_name, adapter_path, device="cuda"):
+    tokenizer = AutoTokenizer.from_pretrained(adapter_path)
+    dtype = torch.float16 if device == "cuda" else torch.float32
+    base_model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype)
+    model = PeftModel.from_pretrained(base_model, adapter_path)
     model.to(device)
     model.eval()
     return model, tokenizer
@@ -89,6 +100,21 @@ def run_baseline(model_name, test_path, output_csv, n_samples=200, max_new_token
 
     examples = sample_examples(test_examples, n=n_samples)
     model, tokenizer = load_model_and_tokenizer(model_name, device)
+    df, summary = evaluate_examples(model, tokenizer, examples, max_new_tokens, device)
+    save_results(df, summary, output_csv)
+    print(json.dumps(summary, indent=2))
+    return df, summary
+
+
+def run_adapter_eval(model_name, adapter_path, test_path, output_csv, n_samples=200, max_new_tokens=256, device=None):
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    with open(test_path) as f:
+        test_examples = json.load(f)
+
+    examples = sample_examples(test_examples, n=n_samples)
+    model, tokenizer = load_adapter_model_and_tokenizer(model_name, adapter_path, device)
     df, summary = evaluate_examples(model, tokenizer, examples, max_new_tokens, device)
     save_results(df, summary, output_csv)
     print(json.dumps(summary, indent=2))

@@ -60,6 +60,7 @@ def train(train_path="data/train.json", val_path="data/val.json", output_dir="ad
         fp16=use_cuda,
         model_init_kwargs={"dtype": torch.float16 if use_cuda else torch.float32},
         gradient_checkpointing_kwargs={"use_reentrant": False},
+        loss_type="nll",
     )
 
     trainer = SFTTrainer(

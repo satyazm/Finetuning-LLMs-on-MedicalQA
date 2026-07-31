@@ -12,7 +12,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 def load_model_and_tokenizer(model_name, device="cuda"):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     dtype = torch.float16 if device == "cuda" else torch.float32
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=dtype)
+    model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype)
     model.to(device)
     model.eval()
     return model, tokenizer

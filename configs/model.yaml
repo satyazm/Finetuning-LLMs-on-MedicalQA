@@ -1,0 +1,2 @@
+base_model: Qwen/Qwen2.5-1.5B-Instruct
+max_seq_length: 512

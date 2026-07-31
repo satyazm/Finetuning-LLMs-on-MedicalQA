@@ -1,0 +1,13 @@
+torch
+transformers
+peft
+trl
+accelerate
+datasets
+evaluate
+bitsandbytes
+wandb
+gradio
+pandas
+numpy
+matplotlib

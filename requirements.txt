@@ -5,6 +5,7 @@ trl
 accelerate
 datasets
 evaluate
+rouge_score
 bitsandbytes
 wandb
 gradio

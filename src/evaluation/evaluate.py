@@ -25,7 +25,7 @@ def load_adapter_model_and_tokenizer(model_name, adapter_path, device="cuda"):
     dtype = torch.float16 if device == "cuda" else torch.float32
     base_model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype)
     model = PeftModel.from_pretrained(base_model, adapter_path)
-    model.to(device)
+    model = model.to(device=device, dtype=dtype)
     model.eval()
     return model, tokenizer
 

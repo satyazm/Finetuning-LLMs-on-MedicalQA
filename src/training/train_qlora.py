@@ -55,7 +55,7 @@ def train(train_path="data/train.json", val_path="data/val.json", output_dir="ad
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_compute_dtype=torch.bfloat16,
         bnb_4bit_use_double_quant=True,
     )
 
@@ -70,8 +70,9 @@ def train(train_path="data/train.json", val_path="data/val.json", output_dir="ad
         eval_strategy="epoch",
         save_strategy="epoch",
         report_to=training_cfg.get("report_to", "none"),
-        fp16=True,
-        model_init_kwargs={"dtype": torch.float16, "device_map": {"": 0}},
+        bf16=True,
+        fp16=False,
+        model_init_kwargs={"dtype": torch.bfloat16, "device_map": {"": 0}},
         gradient_checkpointing_kwargs={"use_reentrant": False},
         loss_type="nll",
     )

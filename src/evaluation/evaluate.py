@@ -6,6 +6,7 @@ import time
 import pandas as pd
 import torch
 from evaluate import load as load_metric
+from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
@@ -50,7 +51,7 @@ def evaluate_examples(model, tokenizer, examples, max_new_tokens=256, device="cu
         torch.cuda.reset_peak_memory_stats()
 
     rows = []
-    for ex in examples:
+    for ex in tqdm(examples, desc="Generating"):
         prediction, latency = generate(model, tokenizer, ex["instruction"], max_new_tokens, device)
         rows.append({
             "instruction": ex["instruction"],

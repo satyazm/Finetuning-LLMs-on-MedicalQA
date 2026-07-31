@@ -1,4 +1,7 @@
 import json
+import os
+
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
 
 import torch
 import yaml
@@ -31,7 +34,7 @@ def load_split(path):
     return Dataset.from_list(to_prompt_completion(records))
 
 
-def train(train_path="data/train.json", val_path="data/val.json", output_dir="adapters/lora"):
+def train(train_path="data/train.json", val_path="data/val.json", output_dir="adapters/lora", resume_from_checkpoint=None):
     model_cfg, training_cfg = load_configs()
     use_cuda = torch.cuda.is_available()
 
@@ -71,7 +74,7 @@ def train(train_path="data/train.json", val_path="data/val.json", output_dir="ad
         peft_config=lora_config,
     )
 
-    trainer.train()
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
     trainer.save_model(output_dir)
 
     return trainer

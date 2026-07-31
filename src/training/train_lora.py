@@ -74,7 +74,15 @@ def train(train_path="data/train.json", val_path="data/val.json", output_dir="ad
         peft_config=lora_config,
     )
 
+    if use_cuda:
+        torch.cuda.reset_peak_memory_stats()
+
     trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+
+    if use_cuda:
+        peak_memory_gb = torch.cuda.max_memory_allocated() / 1e9
+        print(f"Peak training GPU memory: {peak_memory_gb:.2f} GB")
+
     trainer.save_model(output_dir)
 
     return trainer

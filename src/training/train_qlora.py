@@ -55,7 +55,7 @@ def train(train_path="data/train.json", val_path="data/val.json", output_dir="ad
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16,
+        bnb_4bit_compute_dtype=torch.float16,
         bnb_4bit_use_double_quant=True,
     )
 
@@ -70,9 +70,9 @@ def train(train_path="data/train.json", val_path="data/val.json", output_dir="ad
         eval_strategy="epoch",
         save_strategy="epoch",
         report_to=training_cfg.get("report_to", "none"),
-        bf16=True,
-        fp16=False,
-        model_init_kwargs={"dtype": torch.bfloat16, "device_map": {"": 0}},
+        fp16=True,
+        bf16=False,
+        model_init_kwargs={"dtype": torch.float16, "device_map": {"": 0}},
         gradient_checkpointing_kwargs={"use_reentrant": False},
         loss_type="nll",
     )
@@ -85,6 +85,19 @@ def train(train_path="data/train.json", val_path="data/val.json", output_dir="ad
         peft_config=lora_config,
         quantization_config=bnb_config,
     )
+
+    # T4 has no native bf16 tensor cores, so full bf16 training (the usual fix
+    # for this GradScaler/dtype crash) is ~5x slower here. Instead, stay on
+    # fp16 (hardware-accelerated on T4) and fix the actual leak: some
+    # parameter/buffer inherits bfloat16 from Qwen2.5's checkpoint metadata
+    # despite requesting float16 everywhere, which crashes fp16's GradScaler.
+    bf16_leaks = []
+    for name, tensor in list(trainer.model.named_parameters()) + list(trainer.model.named_buffers()):
+        if tensor.dtype == torch.bfloat16:
+            bf16_leaks.append(name)
+            tensor.data = tensor.data.to(torch.float16)
+    if bf16_leaks:
+        print(f"Cast {len(bf16_leaks)} bfloat16 tensor(s) to float16: {bf16_leaks[:10]}")
 
     torch.cuda.reset_peak_memory_stats()
 

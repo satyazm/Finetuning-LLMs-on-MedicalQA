@@ -88,16 +88,20 @@ def train(train_path="data/train.json", val_path="data/val.json", output_dir="ad
 
     # T4 has no native bf16 tensor cores, so full bf16 training (the usual fix
     # for this GradScaler/dtype crash) is ~5x slower here. Instead, stay on
-    # fp16 (hardware-accelerated on T4) and fix the actual leak: some
-    # parameter/buffer inherits bfloat16 from Qwen2.5's checkpoint metadata
-    # despite requesting float16 everywhere, which crashes fp16's GradScaler.
+    # fp16 (hardware-accelerated on T4) and fix the actual leak: the LoRA
+    # adapter weights inherit bfloat16 from Qwen2.5's checkpoint metadata
+    # despite requesting float16 everywhere. fp16 mixed-precision training
+    # expects trainable parameters in float32 (autocast handles the fp16
+    # compute; GradScaler unscales float32 gradients) - float32 is also
+    # standard QLoRA practice for adapter weights regardless of base
+    # precision, for numerical stability.
     bf16_leaks = []
     for name, tensor in list(trainer.model.named_parameters()) + list(trainer.model.named_buffers()):
         if tensor.dtype == torch.bfloat16:
             bf16_leaks.append(name)
-            tensor.data = tensor.data.to(torch.float16)
+            tensor.data = tensor.data.to(torch.float32)
     if bf16_leaks:
-        print(f"Cast {len(bf16_leaks)} bfloat16 tensor(s) to float16: {bf16_leaks[:10]}")
+        print(f"Cast {len(bf16_leaks)} bfloat16 tensor(s) to float32: {bf16_leaks[:10]}")
 
     torch.cuda.reset_peak_memory_stats()
 

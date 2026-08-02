@@ -1,0 +1,5 @@
+[
+  {"epoch": 1, "training_loss": 1.050757, "validation_loss": 1.083137, "entropy": 1.081757, "mean_token_accuracy": 0.730678},
+  {"epoch": 2, "training_loss": 1.089077, "validation_loss": 1.060444, "entropy": 1.047718, "mean_token_accuracy": 0.735095},
+  {"epoch": 3, "training_loss": 0.971286, "validation_loss": 1.055047, "entropy": 1.024514, "mean_token_accuracy": 0.736564}
+]

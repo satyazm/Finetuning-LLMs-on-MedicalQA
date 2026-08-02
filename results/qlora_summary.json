@@ -4,5 +4,8 @@
   "rougeL": 0.2693201648000306,
   "rougeLsum": 0.2697184240135255,
   "mean_latency_sec": 8.106325220534991,
-  "gpu_memory_gb": 4.33706496
+  "gpu_memory_gb": 4.33706496,
+  "train_runtime_sec": 10977.7214,
+  "train_loss": 1.0870005157743958,
+  "peak_training_gpu_memory_gb": 7.47
 }

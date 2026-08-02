@@ -119,3 +119,29 @@ def run_adapter_eval(model_name, adapter_path, test_path, output_csv, n_samples=
     save_results(df, summary, output_csv)
     print(json.dumps(summary, indent=2))
     return df, summary
+
+
+def compute_bertscore(predictions, references, lang="en"):
+    bertscore = load_metric("bertscore")
+    scores = bertscore.compute(predictions=predictions, references=references, lang=lang)
+    return {
+        "bertscore_precision": float(sum(scores["precision"]) / len(scores["precision"])),
+        "bertscore_recall": float(sum(scores["recall"]) / len(scores["recall"])),
+        "bertscore_f1": float(sum(scores["f1"]) / len(scores["f1"])),
+    }
+
+
+def build_comparison_table(runs):
+    rows = []
+    for name, paths in runs.items():
+        with open(paths["summary"]) as f:
+            row = {"model": name, **json.load(f)}
+
+        csv_path = paths.get("csv")
+        if csv_path and os.path.exists(csv_path):
+            df = pd.read_csv(csv_path)
+            row.update(compute_bertscore(df["prediction"].tolist(), df["reference"].tolist()))
+
+        rows.append(row)
+
+    return pd.DataFrame(rows).set_index("model")
